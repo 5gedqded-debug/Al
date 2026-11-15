@@ -15,9 +15,6 @@ import ru.radiationx.data.DataPreferences
 import ru.radiationx.data.MainClient
 import ru.radiationx.data.R
 import ru.radiationx.data.SimpleClient
-import ru.radiationx.data.ads.AdsConfigApi
-import ru.radiationx.data.ads.AdsConfigRepository
-import ru.radiationx.data.ads.AdsConfigStorage
 import ru.radiationx.data.analytics.features.ActivityLaunchAnalytics
 import ru.radiationx.data.analytics.features.AuthDeviceAnalytics
 import ru.radiationx.data.analytics.features.AuthMainAnalytics
@@ -284,11 +281,6 @@ class DataModule(context: Context) : QuillModule() {
         single<DonationDialogAnalytics>()
         single<DonationYooMoneyAnalytics>()
         single<TeamsAnalytics>()
-
-        /* Ads */
-        single<AdsConfigApi>()
-        single<AdsConfigStorage>()
-        single<AdsConfigRepository>()
 
         /* Player */
         single<PlayerDataSourceProvider>()

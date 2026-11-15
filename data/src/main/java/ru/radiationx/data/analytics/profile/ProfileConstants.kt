@@ -18,7 +18,6 @@ object ProfileConstants {
     const val downloads_count = "downloads_count"
     const val app_versions = "app_versions"
     const val fail_attributes = "fail_attributes"
-    const val has_ads = "has_ads"
     const val arch = "arch"
     const val arch_support = "arch_support"
 

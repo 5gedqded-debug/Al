@@ -3,27 +3,21 @@ package ru.radiationx.anilibria.ui.fragments.release.details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.terrakok.cicerone.Router
-import com.yandex.mobile.ads.nativeads.NativeAdRequestConfiguration
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
-import ru.radiationx.anilibria.ads.NativeAdsRepository
 import ru.radiationx.anilibria.model.DonationCardItemState
 import ru.radiationx.anilibria.navigation.Screens
 import ru.radiationx.anilibria.presentation.common.IErrorHandler
 import ru.radiationx.anilibria.presentation.common.ILinkHandler
 import ru.radiationx.anilibria.ui.adapters.release.detail.EpisodeControlPlace
-import ru.radiationx.data.ads.AdsConfigRepository
 import ru.radiationx.data.analytics.AnalyticsConstants
 import ru.radiationx.data.analytics.features.AuthMainAnalytics
 import ru.radiationx.data.analytics.features.CatalogAnalytics
@@ -58,7 +52,6 @@ import ru.radiationx.data.repository.FavoriteRepository
 import ru.radiationx.shared.ktx.EventFlow
 import ru.radiationx.shared.ktx.coRunCatching
 import ru.radiationx.shared_app.common.SystemUtils
-import timber.log.Timber
 import javax.inject.Inject
 
 class ReleaseInfoViewModel @Inject constructor(
@@ -82,8 +75,6 @@ class ReleaseInfoViewModel @Inject constructor(
     private val donationDetailAnalytics: DonationDetailAnalytics,
     private val teamsAnalytics: TeamsAnalytics,
     private val remoteFileRepository: RemoteFileRepository,
-    private val adsConfigRepository: AdsConfigRepository,
-    private val nativeAdsRepository: NativeAdsRepository,
 ) : ViewModel() {
 
     private val remindText =
@@ -158,26 +149,6 @@ class ReleaseInfoViewModel @Inject constructor(
             updateLocalRelease(it, _currentLoadings.value, emptyMap())
         }
         observeRelease()
-
-        viewModelScope.launch {
-            coRunCatching {
-                val config = adsConfigRepository.getConfig().releaseNative
-                if (!config.enabled) return@coRunCatching
-                val releaseTags = _state.mapNotNull { it.data?.info }.first().let {
-                    listOf(it.titleRus, it.titleEng)
-                }
-                val contextTags = config.contextTags + releaseTags
-                val request = NativeAdRequestConfiguration.Builder(config.unitId)
-                    .setContextTags(contextTags)
-                    .build()
-                val nativeAd = withTimeout(config.timeoutMillis) {
-                    nativeAdsRepository.load(request)
-                }
-                _state.update { it.copy(nativeAd = nativeAd) }
-            }.onFailure {
-                Timber.e(it, "Error while load ads for release")
-            }
-        }
     }
 
     private fun observeRelease() {

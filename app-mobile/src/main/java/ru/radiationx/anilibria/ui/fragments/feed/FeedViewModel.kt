@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.terrakok.cicerone.Router
-import com.yandex.mobile.ads.nativeads.NativeAdRequestConfiguration
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,14 +17,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withTimeout
 import ru.mintrocket.lib.mintpermissions.MintPermissionsController
 import ru.mintrocket.lib.mintpermissions.ext.isGranted
 import ru.mintrocket.lib.mintpermissions.flows.MintPermissionsDialogFlow
-import ru.radiationx.anilibria.ads.NativeAdItem
-import ru.radiationx.anilibria.ads.NativeAdsRepository
-import ru.radiationx.anilibria.ads.addAdAt
-import ru.radiationx.anilibria.ads.convert
 import ru.radiationx.anilibria.model.DonationCardItemState
 import ru.radiationx.anilibria.model.ReleaseItemState
 import ru.radiationx.anilibria.model.ScheduleItemState
@@ -34,7 +28,6 @@ import ru.radiationx.anilibria.model.toState
 import ru.radiationx.anilibria.navigation.Screens
 import ru.radiationx.anilibria.presentation.common.IErrorHandler
 import ru.radiationx.anilibria.utils.ShortcutHelper
-import ru.radiationx.data.ads.AdsConfigRepository
 import ru.radiationx.data.analytics.AnalyticsConstants
 import ru.radiationx.data.analytics.features.DonationCardAnalytics
 import ru.radiationx.data.analytics.features.DonationDetailAnalytics
@@ -71,7 +64,6 @@ import ru.radiationx.shared_app.controllers.loaderpage.PageLoaderParams
 import ru.radiationx.shared_app.controllers.loaderpage.appendData
 import ru.radiationx.shared_app.controllers.loaderpage.mapData
 import ru.radiationx.shared_app.controllers.loaderpage.toDataAction
-import timber.log.Timber
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -79,8 +71,6 @@ import javax.inject.Inject
 /* Created by radiationx on 05.11.17. */
 
 class FeedViewModel @Inject constructor(
-    private val nativeAdsRepository: NativeAdsRepository,
-    private val adsConfigRepository: AdsConfigRepository,
     private val feedRepository: FeedRepository,
     private val releaseInteractor: ReleaseInteractor,
     private val scheduleRepository: ScheduleRepository,
@@ -367,16 +357,14 @@ class FeedViewModel @Inject constructor(
     private fun findRelease(id: ReleaseId): Release? {
         val feedItems = pageLoader.getData()?.feedItems ?: return null
         return feedItems
-            .filterIsInstance<NativeAdItem.Data<FeedItem>>()
-            .mapNotNull { it.data.release }
+            .mapNotNull { it.release }
             .find { it.id == id }
     }
 
     private fun findYoutube(id: YoutubeId): YoutubeItem? {
         val feedItems = pageLoader.getData()?.feedItems ?: return null
         return feedItems
-            .filterIsInstance<NativeAdItem.Data<FeedItem>>()
-            .mapNotNull { it.data.youtube }
+            .mapNotNull { it.youtube }
             .find { it.id == id }
     }
 
@@ -417,35 +405,17 @@ class FeedViewModel @Inject constructor(
 
     private suspend fun getDataSource(params: PageLoaderParams<FeedData>): PageLoaderAction.Data<FeedData> {
         return supervisorScope {
-            val adsConfig = adsConfigRepository.getConfig().feedNative
             val newPageAsync = async { getFeedSource(params.page) }
             val scheduleAsync = async {
                 params.appendData { it?.schedule ?: getScheduleSource() }
-            }
-            val adsAsync = async {
-                if (adsConfig.enabled) {
-                    withTimeout(adsConfig.timeoutMillis) {
-                        val request = NativeAdRequestConfiguration
-                            .Builder(adsConfig.unitId)
-                            .setContextTags(adsConfig.contextTags)
-                            .build()
-                        nativeAdsRepository.load(request)
-                    }
-                } else {
-                    null
-                }
             }
 
             coRunCatching {
                 val newPage = newPageAsync.await()
                 val schedule = scheduleAsync.await()
-                val ad = runCatching { adsAsync.await() }
-                    .onFailure { Timber.e(it) }
-                    .getOrNull()
 
-                val newPageWithAds = newPage.addAdAt(adsConfig.listInsertPosition, ad)
                 val newFeedItems = params.appendData {
-                    it?.feedItems.orEmpty() + newPageWithAds
+                    it?.feedItems.orEmpty() + newPage
                 }
 
                 params.toDataAction(newPage.isNotEmpty()) {
@@ -463,7 +433,7 @@ class FeedViewModel @Inject constructor(
     }
 
     private data class FeedData(
-        val feedItems: List<NativeAdItem<FeedItem>> = emptyList(),
+        val feedItems: List<FeedItem> = emptyList(),
         val schedule: FeedScheduleData? = null,
     )
 
@@ -474,9 +444,7 @@ class FeedViewModel @Inject constructor(
 
     private fun FeedData.toState(updates: Map<ReleaseId, ReleaseUpdate>): FeedDataState =
         FeedDataState(
-            feedItems.map { adItem ->
-                adItem.convert { it.toState(updates) }
-            },
+            feedItems.map { it.toState(updates) },
             schedule?.toState()
         )
 

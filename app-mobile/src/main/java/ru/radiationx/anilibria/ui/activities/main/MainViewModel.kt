@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ru.radiationx.anilibria.navigation.Screens
-import ru.radiationx.data.ads.AdsConfigRepository
 import ru.radiationx.data.analytics.AnalyticsConstants
 import ru.radiationx.data.analytics.features.AuthMainAnalytics
 import ru.radiationx.data.analytics.features.CatalogAnalytics
@@ -20,7 +19,6 @@ import ru.radiationx.data.analytics.features.FeedAnalytics
 import ru.radiationx.data.analytics.features.OtherAnalytics
 import ru.radiationx.data.analytics.features.YoutubeVideosAnalytics
 import ru.radiationx.data.analytics.profile.AnalyticsProfile
-import ru.radiationx.data.ads.domain.AdsConfig
 import ru.radiationx.data.datasource.remote.address.ApiConfig
 import ru.radiationx.data.entity.common.AuthState
 import ru.radiationx.data.repository.AuthRepository
@@ -38,7 +36,6 @@ data class MainScreenState(
     val selectedTab: String? = null,
     val needConfig: Boolean = false,
     val mainLogicCompleted: Boolean = false,
-    val adsConfig: AdsConfig? = null,
 )
 
 class MainViewModel @Inject constructor(
@@ -46,7 +43,6 @@ class MainViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val donationRepository: DonationRepository,
     private val configurationRepository: ConfigurationRepository,
-    private val adsConfigRepository: AdsConfigRepository,
     private val apiConfig: ApiConfig,
     private val analyticsProfile: AnalyticsProfile,
     private val authMainAnalytics: AuthMainAnalytics,
@@ -106,14 +102,6 @@ class MainViewModel @Inject constructor(
             .launchIn(viewModelScope)
         _state.update { it.copy(mainLogicCompleted = true) }
 
-        viewModelScope.launch {
-            coRunCatching {
-                val config = adsConfigRepository.getConfig()
-                _state.update { it.copy(adsConfig = config) }
-            }.onFailure {
-                Timber.e(it)
-            }
-        }
         viewModelScope.launch {
             coRunCatching {
                 authRepository.loadUser()

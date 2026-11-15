@@ -6,9 +6,7 @@ import ru.mintrocket.lib.mintpermissions.MintPermissions
 import ru.mintrocket.lib.mintpermissions.flows.MintPermissionsFlow
 import ru.radiationx.anilibria.AppBuildConfig
 import ru.radiationx.anilibria.AppMigrationExecutor
-import ru.radiationx.anilibria.BuildConfig
 import ru.radiationx.anilibria.MobileCheckerSources
-import ru.radiationx.anilibria.ads.NativeAdsRepository
 import ru.radiationx.anilibria.apptheme.AnalyticsThemeProviderImpl
 import ru.radiationx.anilibria.apptheme.AppThemeController
 import ru.radiationx.anilibria.apptheme.AppThemeControllerImpl
@@ -30,14 +28,8 @@ import ru.radiationx.data.datasource.remote.common.CheckerReserveSources
 import ru.radiationx.data.migration.MigrationExecutor
 import ru.radiationx.quill.QuillModule
 import ru.radiationx.shared_app.analytics.AnalyticsCodecsProfileDataSource
-import ru.radiationx.shared_app.analytics.errors.AppMetricaErrorReporter
-import ru.radiationx.shared_app.analytics.errors.CombinedErrorReporter
 import ru.radiationx.shared_app.analytics.errors.LoggingErrorReporter
-import ru.radiationx.shared_app.analytics.events.AppMetricaAnalyticsSender
-import ru.radiationx.shared_app.analytics.events.CombinedAnalyticsSender
 import ru.radiationx.shared_app.analytics.events.LoggingAnalyticsSender
-import ru.radiationx.shared_app.analytics.profile.AppMetricaAnalyticsProfile
-import ru.radiationx.shared_app.analytics.profile.CombinedAnalyticsProfile
 import ru.radiationx.shared_app.analytics.profile.LoggingAnalyticsProfile
 import ru.radiationx.shared_app.imageloader.LibriaImageLoader
 import ru.radiationx.shared_app.imageloader.impls.CoilLibriaImageLoaderImpl
@@ -90,29 +82,12 @@ class AppModule(application: Application) : QuillModule() {
         singleImpl<IErrorHandler, ErrorHandler>()
         singleImpl<LibriaImageLoader, CoilLibriaImageLoaderImpl>()
 
-        /* Ads */
-        single<NativeAdsRepository>()
-
         /* Analytics */
         single<AnalyticsCodecsProfileDataSource>()
 
-        single<AppMetricaAnalyticsSender>()
-        single<AppMetricaAnalyticsProfile>()
-        single<AppMetricaErrorReporter>()
-
-        single<LoggingAnalyticsSender>()
-        single<LoggingAnalyticsProfile>()
-        single<LoggingErrorReporter>()
-
-        if (BuildConfig.DEBUG) {
-            singleImpl<AnalyticsSender, CombinedAnalyticsSender>()
-            singleImpl<AnalyticsProfile, CombinedAnalyticsProfile>()
-            singleImpl<AnalyticsErrorReporter, CombinedErrorReporter>()
-        } else {
-            singleImpl<AnalyticsSender, AppMetricaAnalyticsSender>()
-            singleImpl<AnalyticsProfile, AppMetricaAnalyticsProfile>()
-            singleImpl<AnalyticsErrorReporter, AppMetricaErrorReporter>()
-        }
+        singleImpl<AnalyticsSender, LoggingAnalyticsSender>()
+        singleImpl<AnalyticsProfile, LoggingAnalyticsProfile>()
+        singleImpl<AnalyticsErrorReporter, LoggingErrorReporter>()
     }
 
 }

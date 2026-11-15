@@ -25,7 +25,6 @@ androidx-collection = "1.5.0"
 conscrypt-android = "2.5.3"
 androidx-core = "1.17.0"
 kotlin-coroutines = "1.10.2"
-firebaseCore = "21.1.1"
 firebaseMessaging = "24.1.1"
 google-flexbox = "3.0.0"
 androidx-activity = "1.11.0"
@@ -44,8 +43,6 @@ google-material = "1.13.0"
 media3 = "1.8.0"
 minitemplator = "1.4.1"
 mintpermissions = "1.1.2"
-yandex-mobileads = "7.18.2"
-yandex-appmetrica = "7.14.1"
 moshi = "1.15.2"
 okhttp = "5.3.2"
 androidx-palette = "1.0.0"
@@ -57,7 +54,6 @@ viewbindingpropertydelegate = "2.0.4"
 android-plugin = "9.0.0"
 ksp-plugin = "2.3.5"
 gms-plugin = "4.4.4"
-appmetrica-plugin = "1.3.0"
 
 
 [libraries]
@@ -74,7 +70,6 @@ conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = 
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidx-constraintlayout" }
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
-firebase-core = { module = "com.google.firebase:firebase-core", version.ref = "firebaseCore" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
 google-flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "google-flexbox" }
 androidx-activity = { module = "androidx.activity:activity-ktx", version.ref = "androidx-activity" }
@@ -105,8 +100,6 @@ media3-ui-leanback = { module = "androidx.media3:media3-ui-leanback", version.re
 minitemplator = { module = "org.bsc.util:minitemplator-repackaged", version.ref = "minitemplator" }
 mintpermissions-flows = { module = "com.github.mintrocket.MintPermissions:mintpermissions-flows", version.ref = "mintpermissions" }
 mintpermissions = { module = "com.github.mintrocket.MintPermissions:mintpermissions", version.ref = "mintpermissions" }
-yandex-mobileads = { module = "com.yandex.android:mobileads", version.ref = "yandex-mobileads" }
-yandex-appmetrica = { module = "io.appmetrica.analytics:analytics", version.ref = "yandex-appmetrica" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshi" }
 moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
@@ -123,4 +116,3 @@ android-library = { id = "com.android.library", version.ref = "android-plugin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
 gms = { id = "com.google.gms.google-services", version.ref = "gms-plugin" }
-appmetrica = { id = "io.appmetrica.analytics", version.ref = "appmetrica-plugin" }

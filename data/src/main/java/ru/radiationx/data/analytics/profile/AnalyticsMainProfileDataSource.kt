@@ -72,9 +72,6 @@ class AnalyticsMainProfileDataSource @Inject constructor(
             asyncAttr(ProfileConstants.app_versions) {
                 migrationDataSource.getHistory().joinToString().mapToAttr(it)
             },
-            asyncAttr(ProfileConstants.has_ads) {
-                sharedBuildConfig.hasAds.mapToAttr(it)
-            },
             asyncAttr(ProfileConstants.arch) {
                 (System.getProperty("os.arch") ?: "unknown").mapToAttr(it)
             },

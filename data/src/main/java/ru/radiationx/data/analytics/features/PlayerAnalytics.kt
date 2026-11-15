@@ -139,7 +139,7 @@ class PlayerAnalytics @Inject constructor(
                 "$groupId ${rootCause::class.simpleName} $causeMessage"
             sender.error(groupName, message, throwable)
         } catch (e: Throwable) {
-            Timber.e(e, "Error while sending error to appmetrica")
+            Timber.e(e, "Error while sending error to analytics")
         }
     }
 

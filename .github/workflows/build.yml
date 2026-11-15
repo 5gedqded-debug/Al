@@ -1,0 +1,120 @@
+name: Build
+
+# Runs only when started manually from the Actions tab.
+# There are no push or pull request triggers, so nothing is built or uploaded automatically.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to build"
+        type: choice
+        default: mobile
+        options:
+          - mobile
+          - tv
+          - both
+      retention_days:
+        description: "How many days to keep the artifact (1-90)"
+        type: string
+        default: "30"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build release APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Accept Android SDK licenses
+        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      # Signing config is read by the Gradle build from local.properties.
+      # With repository secrets the APK is signed with your own release key.
+      # Without them it falls back to the public debug key, so the APK installs
+      # but its signature is NOT a trusted release signature.
+      - name: Configure signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import base64, os
+
+          def esc(value):
+              return value.replace("\\", "\\\\")
+
+          encoded = os.environ.get("KEYSTORE_BASE64", "").strip()
+          if encoded:
+              store_file = os.path.join(os.environ["RUNNER_TEMP"], "release.keystore")
+              with open(store_file, "wb") as f:
+                  f.write(base64.b64decode(encoded))
+              props = {
+                  "storeFile": store_file,
+                  "storePassword": os.environ["KEYSTORE_PASSWORD"],
+                  "keyAlias": os.environ["KEY_ALIAS"],
+                  "keyPassword": os.environ["KEY_PASSWORD"],
+              }
+              print("Signing with the release keystore from repository secrets")
+          else:
+              props = {
+                  "storeFile": os.path.join(os.environ["GITHUB_WORKSPACE"], ".github", "debug.keystore"),
+                  "storePassword": "android",
+                  "keyAlias": "androiddebugkey",
+                  "keyPassword": "android",
+              }
+              print("::warning::Release keystore secrets are not set, signing with the public debug key")
+
+          with open("local.properties", "w", encoding="utf-8") as f:
+              for key, value in props.items():
+                  f.write(f"{key}={esc(value)}\n")
+          PY
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build mobile release APK
+        if: ${{ inputs.target == 'mobile' || inputs.target == 'both' }}
+        run: ./gradlew :app-mobile:assembleAppRelease --stacktrace
+
+      - name: Build TV release APK
+        if: ${{ inputs.target == 'tv' || inputs.target == 'both' }}
+        run: ./gradlew :app-tv:assembleAppRelease --stacktrace
+
+      - name: Upload mobile APK
+        if: ${{ inputs.target == 'mobile' || inputs.target == 'both' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: anilibria-mobile
+          path: app-mobile/build/outputs/apk/app/release/*.apk
+          if-no-files-found: error
+          retention-days: ${{ fromJSON(inputs.retention_days) }}
+
+      - name: Upload TV APK
+        if: ${{ inputs.target == 'tv' || inputs.target == 'both' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: anilibria-tv
+          path: app-tv/build/outputs/apk/app/release/*.apk
+          if-no-files-found: error
+          retention-days: ${{ fromJSON(inputs.retention_days) }}

@@ -47,6 +47,13 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
+      # Fixed public debug key, so every build has the same signature
+      # and a new APK installs over the previous one.
+      - name: Install fixed debug keystore
+        run: |
+          mkdir -p ~/.android
+          cp .github/debug.keystore ~/.android/debug.keystore
+
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
